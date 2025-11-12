@@ -1,0 +1,231 @@
+
+services:
+
+  apache:
+    user: "${USER_ID}:${GROUP_ID}"
+    container_name: apache
+    build:
+      context: .
+      dockerfile: ./docker/apache/Dockerfile
+      args:
+        - USER_ID
+        - GROUP_ID
+    volumes:
+      - .:/var/www/chaba
+      - ./storage/logs/apache2:/var/log/apache2/
+    restart: unless-stopped
+    networks:
+      - mynet
+
+  # load balancing and security services; had it running once, but skipping for now to ease development
+  # web:
+  #   container_name: web
+  #   image: owasp/modsecurity-crs:nginx
+  #   depends_on:
+  #     - chabaa
+  #   volumes:
+  #     - .:/var/www/chabaa
+  #     #- ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+  #     - ./docker/nginx/ssl/:/etc/nginx/ssl/
+  #     - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./storage/logs/nginx:/var/log/nginx/
+  #   expose:
+  #     - "80"
+  #   ports:
+  #     - "80:80"
+  #     #labels:
+  #     # - traefik.http.routers.web.rule=Host(`chabaa`)
+  #      #- traefik.http.routers.web.entrypoints=web
+  #      #- traefik.http.services.web.loadbalancer.server.port=80
+  #    restart: always
+  #    networks:
+  #      - mynet
+
+  database:
+    container_name: database
+    image: mariadb:10.5
+    volumes:
+      - ./storage/data/mysql:/var/lib/mysql
+      - ./storage/logs/mysql:/var/log/mysql/
+      - ./docker/mariadb/etc/my.cnf:/etc/mysql/my.cnf
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    networks:
+      - mynet
+
+  redis:
+    container_name: redis
+    build:
+      context: .
+      dockerfile: ./docker/redis/Dockerfile
+    volumes:
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+    networks:
+      - mynet
+
+  # queue set up according to https://laravel-news.com/laravel-scheduler-queue-docker
+  queue:
+    container_name: queue
+    build:
+      context: .
+      dockerfile: ./docker/queue/Dockerfile
+      args:
+        - USER_ID
+        - GROUP_ID
+    depends_on:
+      - redis
+    volumes:
+      - .:/var/www/chaba/queue
+      - ./storage/logs/php:/var/log/php/
+    restart: on-failure
+    environment:
+      APP_ENV: local
+      CONTAINER_ROLE: queue
+    working_dir: /var/www/chaba/queue
+    networks:
+      - mynet
+
+  sftp:
+    container_name: sftp
+    image: atmoz/sftp
+    volumes:
+      - ./storage/data/sftp:/home/foo/upload
+    # TODO consider bind mount instead of hosting in docker container
+    environment:
+      - SFTP_USERS=${SFTP_USER}:${SFTP_PASSWORD}:::upload
+    networks:
+      - mynet
+    restart: always
+
+
+  icecast:
+    container_name: icecast
+    build:
+      context: .
+      dockerfile: docker/icecast/Dockerfile
+    working_dir: /var/www/chaba
+    command: /opt/start_modified.sh
+    volumes:
+      - ./storage/logs/icecast:/var/log/icecast2
+      - ./docker/icecast/start_modified.sh/:/opt/start_modified.sh:ro
+      - /etc/localtime:/etc/localtime:ro
+    #  - ./docker/icecast/icecast.xml:/etc/icecast2/icecast.xml
+    environment:
+      - ICECAST_SOURCE_PASSWORD=${ICECAST_SOURCE_PASSWORD}
+      - ICECAST_ADMIN_PASSWORD=${ICECAST_ADMIN_PASSWORD}
+      - ICECAST_RELAY_PASSWORD=${ICECAST_RELAY_PASSWORD}
+      - ICECAST_PASSWORD=${ICECAST_MOUNT_PASSWORD}
+      - ICECAST_PORT=${ICECAST_PORT}
+    ports:
+    # TODO set icecast port correctly through environment variable into config
+      - 8081:8081
+
+      #labels:
+      #- traefik.tcp.routers.icecast-streaming.rule=HostSNI(`*`)
+      #- traefik.tcp.routers.icecast-streaming.entrypoints=web2
+      #- traefik.tcp.routers.icecast-streaming.service=icecast-streaming
+      #- traefik.tcp.services.icecast-streaming.loadbalancer.server.port=8081
+
+      #- traefik.http.routers.icecast.rule=Host(`icecast.chabaa`)
+      #- traefik.http.routers.icecast.entrypoints=web2,web
+      #- traefik.http.routers.icecast.service=icecast
+      #- traefik.http.services.icecast.loadbalancer.server.port=8081
+    restart: always
+    networks:
+      - mynet
+
+
+#  traefik:
+#    container_name: traefik
+#    image: traefik:latest
+#    # Enables the web UI and tells Traefik to listen to docker
+#    command:
+#      - --providers.providersThrottleDuration=60s
+#      - --api.insecure=true
+#      - --providers.docker
+#      #- --entrypoints.rtmp.address=:1935
+#      - --entrypoints.web.address=:80
+#      - --entrypoints.traefik.address=:9000
+#      - --entrypoints.web2.address=:8081
+#      - --entrypoints.web2.transport.lifeCycle.graceTimeOut=60
+#      - --entrypoints.web3.address=:8000
+#      - --log.level=DEBUG
+#      - --log.filePath=/var/log/traefik/access.log
+#    ports:
+#      - ${WEBSERVER_PORT}:80
+#      - 8081:8081
+#    networks:
+#      - web
+#      - mynet
+#    volumes:
+#      # So that Traefik can listen to the Docker events
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      #- ./docker/traefik:/etc/traefik
+#      - ./storage/logs/traefik:/var/log/traefik
+#    labels:
+#      - traefik.http.routers.traefik.rule=Host(`traefik.chabaa`)
+#      - traefik.http.routers.traefik.entrypoints=web
+#      - traefik.http.routers.traefik.service=traefik
+#      - traefik.http.services.traefik.loadbalancer.server.port=9000
+#
+
+
+  websocket:
+    container_name: websocket
+    image: mintopia/laravel-echo-server
+    ports:
+      - 6001:6001
+    networks:
+      - mynet
+    restart: always
+
+
+  ubuntu-streaming:
+    container_name: streaming
+    build:
+      context: .
+      dockerfile: ./docker/ubuntu-streaming/Dockerfile
+    volumes:
+      - ./docker/ubuntu-streaming/conf.d/:/etc/nginx/conf.d/
+      - ./docker/ubuntu-streaming/sites-available/:/etc/nginx/sites-available/
+      - ./docker/ubuntu-streaming/ssl/:/etc/nginx/ssl/
+      - ./docker/ubuntu-streaming/nginx.conf:/etc/nginx/nginx.conf
+      - ./storage/logs/streaming:/var/log/nginx/
+      #- ./storage/nginx/www:/var/www/
+
+    expose:
+      - "8080"
+      #- "8000"
+      - "1935"
+
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+      #- "8000:8000"
+
+    restart: always
+    networks:
+      - mynet
+
+  # for calendar:
+  # baikal:
+  #  image: ckulka/baikal:nginx
+  #  container_name: baikal
+  #  hostname: baikal
+  #  restart: always
+  #  ports:
+  #    - "9999:80"
+  #  volumes:
+  #    - config:/var/www/baikal/config
+  #    - data:/var/www/baikal/Specific
+#      - ./docker/baikal/config:/var/www/baikal/config
+#      - ./docker/baikal/data:/var/www/baikal/Specific
+   # networks:
+   #   - mynet
+networks:
+  mynet:

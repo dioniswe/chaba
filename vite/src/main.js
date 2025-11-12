@@ -23,7 +23,7 @@ window.$ = window.jQuery = $
 window.Plyr = Plyr
 window.Hls = Hls
 // Vue-Setup
-Vue.use(Vuex)
+//Vue.use(Vuex)
 Vue.component('chat-messages', ChatMessages)
 Vue.component('chat-form', ChatForm)
 

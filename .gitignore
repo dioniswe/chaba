@@ -1,0 +1,4 @@
+backend/chaba/__pycache__
+db.sqlite3
+.env
+.idea
