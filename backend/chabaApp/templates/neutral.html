@@ -1,0 +1,142 @@
+{% load django_vite %}
+<!doctype html>
+<html lang="en{# str_replace('_', '-', app()->getLocale()) #}">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{# csrf_token() #}">
+
+    <title>{# config('app.name', 'Chabaa') #}</title>
+
+    <!-- external font libraries >
+    <link href="/static/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/fontawesome/css/all.css" rel="stylesheet">
+    <link href="/static/plyr/dist/plyr.css" rel="stylesheet"-->
+
+    <!-- external javascript libraries >
+    <script src="/static/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    <script src="/static/plyr/dist/plyr.js"></script>
+    <script src="/static/jquery/dist/jquery.js"></script>
+    <script src="/static/hls/dist/hls.js"></script-->
+
+    <!-- vitejs generated Scripts -->
+    <!--script src="/static/index.js"></script-->
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div id="app">
+    <div class=" content container" id="app-navigation">
+        <div class="links">
+            <div class="row">
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{% url 'church' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-church fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('Live-Service')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{%url 'radio' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-broadcast-tower fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('Radio')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{%url 'chat' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-comments fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('Chat')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{%url 'recordings' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-photo-video fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('Recordings')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{%url 'user' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-user fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('user')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-6 col-sm-4 col-md-3  col-xl-2">
+                    <a href="{%url 'announcements' %}">
+                        <div class="card">
+                            <div class="card-image-top ">
+                                <i class="fas fa-calendar-alt fa-3x"></i>
+                            </div>
+                            <div class="card-body">
+                                {{_('Calendar')}}/<br>{{_('Upcoming')}}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- if  has info >
+             <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                 {# session('info') #}
+                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+             </div>
+         < if  has info -->
+    </div>
+
+    {% block content %}{% endblock %}
+
+</div>
+{% vite_hmr_client %}
+{% vite_asset 'main.js' %}
+
+{% block app-js-scripts %}{% endblock %}
+<script>
+
+    window.default_locale = "{# config('app.locale') #}";
+    window.fallback_locale = "{# config('app.fallback_locale') #}";
+    window.tidings = [];
+    window.setTimeout(function() {
+        $(".alert.fade").fadeTo(500, 0).slideUp(500, function(){
+            $(this).remove();
+        });
+    }, 2000);
+
+
+</script>
+<!--script src="{{'vendor/font-awesome/js/all.js' }}"></script-->
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

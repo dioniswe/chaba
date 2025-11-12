@@ -11,16 +11,28 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# handle environment file
+import environ
+import os
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent
+
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, True)
+)
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(PROJECT_ROOT, '.env'))
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2^)uc9!f0un6tpz%r3v*60z6@65pz$u0(v)bb5)=%=$n10j@_r'
+SECRET_KEY = env('SECRET_KEY')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,9 +49,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'chabaApp',
+    'django_vite',
+    'corsheaders',
 ]
+DJANGO_VITE_DEV_MODE = DEBUG
+DJANGO_VITE_DEV_SERVER_HOST = "localhost"   # ohne http://
+DJANGO_VITE_DEV_SERVER_PORT = 5173
+VITE_DEV_MODE = True
+VITE_STATIC_URL_PREFIX = ""
+VITE_MANIFEST_PATH = BASE_DIR / "frontend/dist/manifest.json"  # nur als Fallback
+
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -48,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'chaba.urls'
 
@@ -66,6 +90,24 @@ TEMPLATES = [
     },
 ]
 
+# redis cache
+CACHES = {
+    # Read os.environ['CACHE_URL'] and raises
+    # ImproperlyConfigured exception if not found.
+    #
+    # The cache() method is an alias for cache_url().
+    # 'default': env.cache(),
+
+    # read os.environ['REDIS_URL']
+    'default': {
+     'BACKEND': 'django_redis.cache.RedisCache',
+     'LOCATION': f'redis://{env("REDIS_HOST")}:{env("REDIS_PORT")}/1',
+     'OPTIONS': {
+         'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+         'PASSWORD': env('REDIS_PASSWORD', default=None) if env('REDIS_PASSWORD') != 'null' else None,
+     }
+    }
+}
 WSGI_APPLICATION = 'chaba.wsgi.application'
 
 
@@ -73,10 +115,16 @@ WSGI_APPLICATION = 'chaba.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "OPTIONS": {
+            "read_default_file": "/var/www/chabaa/chabaa_python/backend/chabaa/my.cnf",
+        }
     }
+   # 'default': {
+   #     'ENGINE': 'django.db.backends.sqlite3',
+   #     'NAME': BASE_DIR / 'db.sqlite3',
+   # }
 }
 
 
@@ -114,7 +162,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [    BASE_DIR / "static" ]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
