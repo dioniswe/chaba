@@ -8,8 +8,8 @@
 ## About Chaba
 
 Chaba חבא 
- It is an app supporting churches to use digital capabilities for their gatherings and cooperations and is a response
- to corona-enforced shutdowns of german churches.  in hebrew means to retreat or harden).
+ It is an app supporting churches to use digital capabilities for their gatherings and cooperations.
+ In hebrew it means to retreat or harden).
  It comprises 
 
 - video streaming church services through common desktop and mobile web-browsers using hls and flashvideo
@@ -24,7 +24,7 @@ Chaba חבא
 
 Thank you for considering contribution to the chaba online church app!   
 In brief chaba offers a couple of tools delivering an app to aid churches
-in their digital struggle after corona lockdowns. For an initial glance on the used technologies take a look
+in their digital struggle. For an initial glance on the used technologies take a look
 at the docker-compose.yml.
 
 ## Security Vulnerabilities
