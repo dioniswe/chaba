@@ -1,7 +1,6 @@
 
-<img src="README/mobile-front-page.jpg" alt="drawing" width="350"/>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="presentation/mobile-church-service.jpg" alt="drawing" width="350"/>   
-<img src="README/mobile-church-service.jpg" alt="drawing" width="350"/>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="presentation/mobile-church-service.jpg" alt="drawing" width="350"/>
-<img src="README/found_connection.png" alt="drawing" width="800"/>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="presentation/mobile-church-service.jpg" alt="drawing" width="350"/>
+<img src="README/mobile-front-page.jpg" width="350"/>&nbsp; &nbsp; &nbsp; <img src="README/mobile-church-service.jpg"  width="350"/>
+<img src="README/found_connection.png" alt="drawing" width="800"/>
 <img src="README/streaming-church-service-2.png" alt="drawing" width="800"/>   
 
 
